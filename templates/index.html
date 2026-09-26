@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZNE Security - MVP</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            background-color: #0b0b0b;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .phone-frame {
+            width: 380px;
+            height: 750px;
+            background-color: #111411;
+            border: 4px solid #1a331a;
+            border-radius: 40px;
+            box-shadow: 0 0 30px rgba(0, 255, 102, 0.15);
+            overflow-y: auto;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+        h2 { 
+            color: #ff1e1e;
+            text-align: center; 
+            margin-top: 5px; 
+            font-weight: 900;
+            letter-spacing: 1px;
+        
+        }
+        h3 { color: #00ff66; text-align: center; margin-top: 5px; }
+        
+        .card-box {
+            background: linear-gradient(135deg, #141c14, #0a140a);
+            border: 1px solid #00ff66;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 10px;
+            border: 1px solid #224422;
+            background-color: #141914;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+        input:focus, select:focus, textarea:focus { border-color: #00ff66; outline: none; }
+        
+        button {
+            background-color: #00ff66;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #00cc52; }
+        
+        .oneid-btn {
+            background-color: #003311;
+            color: #00ff66;
+            border: 1px solid #00ff66;
+            margin-bottom: 8px;
+        }
+        .link-btn {
+            background: none;
+            border: none;
+            color: #00ff66;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .hidden { display: none !important; }
+        .success-msg { color: #00ff66; text-align: center; font-size: 13px; }
+        
+        #map-container { width: 100%; height: 350px; border-radius: 12px; margin-top: 10px; }
+        
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            background-color: #141914;
+            border-top: 1px solid #224422;
+            padding: 8px 0;
+            border-radius: 0 0 35px 35px;
+            margin: -20px -20px 0 -20px;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #778877;
+            font-size: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .nav-btn.active {
+            color: #00ff66;
+        }
+
+        .history-list {
+            margin-top: 10px;
+        }
+        .history-item, .setting-item {
+            background-color: #141914;
+            border: 1px solid #224422;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .lang-card {
+            background: #141914;
+            border: 2px solid #00ff66;
+            padding: 25px;
+            border-radius: 20px;
+            width: 80%;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,255,102,0.3);
+        }
+        .lang-option-btn {
+            background-color: #1a331a;
+            color: #00ff66;
+            border: 1px solid #00ff66;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .lang-option-btn:hover { background-color: #00ff66; color: #000; }
+        
+        video, canvas {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border: 3px solid #00ff66;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <!-- Tilni tanlash oynasi -->
+        <div id="language-modal" class="modal">
+            <div class="lang-card">
+                <h3 style="margin-bottom: 15px;">Tilni tanlang / Выберите язык / Select Language</h3>
+                <button class="lang-option-btn" onclick="selectLanguage('uz')">🇺🇿 O'zbekcha</button>
+                <button class="lang-option-btn" onclick="selectLanguage('ru')">🇷🇺 Русский</button>
+                <button class="lang-option-btn" onclick="selectLanguage('en')">🇬🇧 English</button>
+            </div>
+        </div>
+
+        <!-- Yuzni ro'yxatdan o'tkazish kamera oynasi -->
+        <div id="reg-camera-modal" class="modal hidden">
+            <h3 style="color:#00ff66; margin-bottom:10px;">Face ID uchun yuzingizni skan qiling</h3>
+            <video id="reg-video" autoplay playsinline></video>
+            <canvas id="reg-canvas" class="hidden"></canvas>
+            <button onclick="captureRegPhoto()" style="width: 180px; padding: 10px;">📷 Rasmga olish</button>
+        </div>
+
+        <!-- Face ID Tekshiruv kamera oynasi -->
+        <div id="face-modal" class="modal hidden">
+            <h3 style="color:#00ff66; margin-bottom:10px;">Face ID tekshiruvi</h3>
+            <video id="face-video" autoplay playsinline></video>
+            <canvas id="face-canvas" class="hidden"></canvas>
+            <p id="face-status" style="font-size: 12px; color: #aaa; margin: 10px 0;">Kamera orqali yuzingiz tekshirilmoqda...</p>
+            <button onclick="verifyFaceID()" style="width: 180px; padding: 10px;">Skan qilish & Tasdiqlash</button>
+        </div>
+
+        <div class="content-area">
+            <h2>ZNE SECURITY</h2>
+            
+            <!-- 1. Kirish Ekrani -->
+            <div id="login-section">
+                <h3 id="txt-login-title">Tizimga Kirish</h3>
+                <input type="text" id="login-phone" placeholder="Telefon raqam (+998...)">
+                <input type="password" id="login-password" placeholder="Parol">
+                <button onclick="loginUser()" id="btn-login">Kirish</button>
+                <div style="text-align: center; margin-top: 10px;">
+                    <button class="link-btn" onclick="showRegister()" id="txt-to-reg">Ro'yxatdan o'tish</button>
+                </div>
+                <p id="login-msg" class="success-msg"></p>
+            </div>
+
+            <!-- 2. Ro'yxatdan o'tish Ekrani -->
+            <div id="register-section" class="hidden">
+                <h3 id="txt-reg-title">Ro'yxatdan o'tish</h3>
+                <button class="oneid-btn" onclick="simulateOneID()" id="btn-oneid">🛡️ OneID orqali Tasdiqlash</button>
+                <p id="oneid-status" style="font-size: 11px; color: #888; text-align: center; margin-bottom: 8px;">OneID ulanmagan</p>
+                
+                <button class="oneid-btn" onclick="openRegCamera()" style="background-color: #1a331a; border-color:#00ff66;">📸 Face ID Yuzni Ro'yxatdan o'tkazish</button>
+                <p id="face-reg-status" style="font-size: 11px; color: #888; text-align: center; margin-bottom: 8px;">Rasm olinmagan</p>
+
+                <input type="text" id="reg-phone" placeholder="Telefon raqam (+998...)">
+                <input type="text" id="reg-fullname" placeholder="F.I.Sh." readonly>
+                <input type="password" id="reg-password" placeholder="Parol yarating">
+                <input type="password" id="reg-confpassword" placeholder="Parolni tasdiqlang">
+                
+                <button onclick="registerUser()" id="btn-reg-confirm">Tasdiqlash</button>
+                <div style="text-align: center; margin-top: 8px;">
+                    <button class="link-btn" onclick="showLogin()" id="txt-to-login">Orqaga (Kirish)</button>
+                </div>
+                <p id="reg-msg" class="success-msg"></p>
+            </div>
+
+            <!-- 3. Dashboard -->
+            <div id="dashboard-section" class="hidden">
+                
+                <!-- Tab 1: Asosiy Sahifa -->
+                <div id="tab-home">
+                    <div class="card-box">
+                        <h4 id="user-display" style="margin:0 0 5px 0; color:#00ff66; font-size: 13px;">Xush kelibsiz!</h4>
+                        <p id="txt-card-lbl" style="margin:0; font-size: 11px; color:#aaa;">Humo / Uzcard Balansi</p>
+                        <h3 id="balance-display" style="margin:5px 0 0 0; color:#fff;">1,000,000 UZS</h3>
+                    </div>
+
+                    <h3 id="txt-shop-title" style="font-size: 13px; text-align: left;">Xarid va Xavfsizlik</h3>
+                    <input type="text" id="place_name" placeholder="Savdo nuqtasi (Korzinka, Yandex...)">
+                    <select id="category">
+                        <option value="Supermarket">🛒 Supermarket</option>
+                        <option value="Ovqatlanish">🍔 Ovqatlanish & Fast Food</option>
+                        <option value="Transport">🚗 Transport & Taksi</option>
+                        <option value="Boshqa">📦 Boshqa xarajatlar</option>
+                    </select>
+                    <input type="number" id="amount" placeholder="Summa (UZS)">
+                    <button onclick="startFaceIDCamera()" id="btn-faceid">Face ID bilan Tasdiqlash</button>
+
+                    <h3 id="txt-rate-title" style="font-size: 13px; text-align: left; margin-top: 12px;">To'lovinggizni baholang</h3>
+                    <div id="star-rating" style="text-align: center; font-size: 22px; cursor: pointer; color: #444; margin: 2px 0;">
+                        <span onclick="rateStar(1)">★</span>
+                        <span onclick="rateStar(2)">★</span>
+                        <span onclick="rateStar(3)">★</span>
+                        <span onclick="rateStar(4)">★</span>
+                        <span onclick="rateStar(5)">★</span>
+                    </div>
+                    <textarea id="feedback-text" placeholder="O'z fikringizni bildiring..." style="height: 40px; resize: none;"></textarea>
+                    <button onclick="submitFeedback()" id="btn-send-feedback" style="padding: 6px; font-size: 12px; margin-top: 2px;">Bahoni yuborish</button>
+                </div>
+
+                <!-- Tab 2: Xarita -->
+                <div id="tab-map" class="hidden">
+                    <h3 id="txt-map-title" style="font-size: 13px; text-align: left;">Yaqin atrofdagi obyektlar</h3>
+                    <div style="display: flex; gap: 5px; margin-bottom: 8px;">
+                        <input type="text" id="map-search-query" placeholder="Supermarket, Zapravka..." style="margin:0;">
+                        <button onclick="searchMapPlaces()" id="btn-search-map" style="width: 90px; margin:0;">Qidirish</button>
+                    </div>
+                    <div id="map-container"></div>
+                </div>
+
+                <!-- Tab 3: Tranzaksiya va Statistika -->
+                <div id="tab-history" class="hidden">
+                    <h3 id="txt-stats-title" style="font-size: 13px; text-align: left;">Xarajatlar Statistikasi</h3>
+                    <div id="stats-container" class="history-list">
+                        <p style="font-size: 11px; color: #777; text-align: center;">Hozircha statistika yo'q</p>
+                    </div>
+
+                    <h3 id="txt-history-title" style="font-size: 13px; text-align: left; margin-top: 15px;">Tranzaksiyalar Tarixi</h3>
+                    <div id="history-container" class="history-list">
+                        <p style="font-size: 11px; color: #777; text-align: center;">Hozircha tranzaksiyalar yo'q</p>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Sozlamalar -->
+                <div id="tab-settings" class="hidden">
+                    <h3 id="txt-settings-title" style="font-size: 14px; text-align: left;">Ilova Sozlamalari</h3>
+                    
+                    <div class="setting-item">
+                        <span id="txt-lang-lbl">🌐 Ilova tili</span>
+                        <select id="lang-select" style="width: 110px; margin: 0; padding: 5px;" onchange="changeLanguageFromSettings()">
+                            <option value="uz">O'zbekcha</option>
+                            <option value="ru">Русский</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <span id="txt-faceid-lbl">🛡️ Face ID himoyasi</span>
+                        <input type="checkbox" checked style="width: 20px; height: 20px; accent-color: #00ff66;">
+                    </div>
+
+                    <button onclick="openEditProfile()" id="btn-edit-profile" style="background-color: #1a331a; color: #00ff66; border: 1px solid #00ff66; margin-top: 15px;">👤 Ma'lumotlarni Tahrirlash</button>
+                    
+                    <div id="edit-profile-box" class="hidden" style="background: #141914; border: 1px solid #00ff66; padding: 12px; border-radius: 10px; margin-top: 10px;">
+                        <input type="text" id="edit-fullname" placeholder="F.I.Sh. ni o'zgartirish">
+                        <input type="text" id="edit-phone" placeholder="Telefon raqamni o'zgartirish">
+                        <button onclick="saveProfile()" id="btn-save-profile" style="padding: 6px; font-size: 12px; margin-top: 5px;">Saqlash</button>
+                    </div>
+
+                    <button onclick="logoutUser()" id="btn-logout" style="background-color: #331111; color: #ff4444; border: 1px solid #ff4444; margin-top: 15px;">Tizimdan chiqish</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Navigatsiya -->
+        <div id="bottom-nav-bar" class="bottom-nav hidden">
+            <button class="nav-btn active" id="btn-tab-home" onclick="switchTab('home')">🏠 <span id="nav-home">Asosiy</span></button>
+            <button class="nav-btn" id="btn-tab-map" onclick="switchTab('map')">🗺️ <span id="nav-map">Xarita</span></button>
+            <button class="nav-btn" id="btn-tab-history" onclick="switchTab('history')">📜 <span id="nav-history">Tranzaksiya</span></button>
+            <button class="nav-btn" id="btn-tab-settings" onclick="switchTab('settings')">⚙️ <span id="nav-settings">Sozlamalar</span></button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let currentUserPhone = "";
+        let currentUserName = "";
+        let verifiedOneID = "";
+        let registeredFacePhoto = "";
+        let map, mapInitialized = false;
+        let markersLayer = new L.LayerGroup();
+        let currentRating = 0;
+        let currentLang = 'uz';
+        let mediaStream = null;
+
+        const translations = {
+            uz: {
+                loginTitle: "Tizimga Kirish", loginBtn: "Kirish", toReg: "Ro'yxatdan o'tish",
+                regTitle: "Ro'yxatdan o'tish", oneidBtn: "🛡️ OneID orqali Tasdiqlash", regConfirm: "Tasdiqlash",
+                toLogin: "Orqaga (Kirish)", cardLbl: "Humo / Uzcard Balansi", shopTitle: "Xarid va Xavfsizlik",
+                faceidBtn: "Face ID bilan Tasdiqlash", rateTitle: "To'lovinggizni baholang", sendFeedback: "Bahoni yuborish",
+                mapTitle: "Yaqin atrofdagi obyektlar", searchMap: "Qidirish", statsTitle: "Xarajatlar Statistikasi",
+                historyTitle: "Tranzaksiyalar Tarixi", settingsTitle: "Ilova Sozlamalari", langLbl: "🌐 Ilova tili",
+                faceidLbl: "🛡️ Face ID himoyasi", editProfile: "👤 Ma'lumotlarni Tahrirlash", saveProfile: "Saqlash",
+                logout: "Tizimdan chiqish", navHome: "Asosiy", navMap: "Xarita", navHistory: "Tranzaksiya", navSettings: "Sozlamalar"
+            },
+            ru: {
+                loginTitle: "Вход в систему", loginBtn: "Войти", toReg: "Регистрация",
+                regTitle: "Регистрация", oneidBtn: "🛡️ Подтвердить через OneID", regConfirm: "Подтвердить",
+                toLogin: "Назад (Вход)", cardLbl: "Баланс Humo / Uzcard", shopTitle: "Покупки и Безопасность",
+                faceidBtn: "Подтвердить через Face ID", rateTitle: "Оцените ваш платеж", sendFeedback: "Отправить оценку",
+                mapTitle: "Объекты поблизости", searchMap: "Поиск", statsTitle: "Статистика расходов",
+                historyTitle: "История транзакций", settingsTitle: "Настройки приложения", langLbl: "🌐 Язык приложения",
+                faceidLbl: "🛡️ Защита Face ID", editProfile: "👤 Редактировать данные", saveProfile: "Сохранить",
+                logout: "Выйти из системы", navHome: "Главная", navMap: "Карта", navHistory: "Транзакции", navSettings: "Настройки"
+            },
+            en: {
+                loginTitle: "Sign In", loginBtn: "Login", toReg: "Register",
+                regTitle: "Registration", oneidBtn: "🛡️ Verify via OneID", regConfirm: "Confirm",
+                toLogin: "Back (Login)", cardLbl: "Humo / Uzcard Balance", shopTitle: "Shopping & Security",
+                faceidBtn: "Confirm with Face ID", rateTitle: "Rate your payment", sendFeedback: "Submit Rating",
+                mapTitle: "Nearby Places", searchMap: "Search", statsTitle: "Expense Statistics",
+                historyTitle: "Transaction History", settingsTitle: "App Settings", langLbl: "🌐 App Language",
+                faceidLbl: "🛡️ Face ID Protection", editProfile: "👤 Edit Profile Data", saveProfile: "Save",
+                logout: "Log Out", navHome: "Home", navMap: "Map", navHistory: "Transactions", navSettings: "Settings"
+            }
+        };
+
+        function selectLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('lang-select').value = lang;
+            document.getElementById('language-modal').classList.add('hidden');
+            applyLanguage();
+        }
+
+        function changeLanguageFromSettings() {
+            currentLang = document.getElementById('lang-select').value;
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            let t = translations[currentLang];
+            if (!t) return;
+            document.getElementById('txt-login-title').innerText = t.loginTitle;
+            document.getElementById('btn-login').innerText = t.loginBtn;
+            document.getElementById('txt-to-reg').innerText = t.toReg;
+            document.getElementById('txt-reg-title').innerText = t.regTitle;
+            document.getElementById('btn-oneid').innerText = t.oneidBtn;
+            document.getElementById('btn-reg-confirm').innerText = t.regConfirm;
+            document.getElementById('txt-to-login').innerText = t.toLogin;
+            document.getElementById('txt-card-lbl').innerText = t.cardLbl;
+            document.getElementById('txt-shop-title').innerText = t.shopTitle;
+            document.getElementById('btn-faceid').innerText = t.faceidBtn;
+            document.getElementById('txt-rate-title').innerText = t.rateTitle;
+            document.getElementById('btn-send-feedback').innerText = t.sendFeedback;
+            document.getElementById('txt-map-title').innerText = t.mapTitle;
+            document.getElementById('btn-search-map').innerText = t.searchMap;
+            document.getElementById('txt-stats-title').innerText = t.statsTitle;
+            document.getElementById('txt-history-title').innerText = t.historyTitle;
+            document.getElementById('txt-settings-title').innerText = t.settingsTitle;
+            document.getElementById('txt-lang-lbl').innerText = t.langLbl;
+            document.getElementById('txt-faceid-lbl').innerText = t.faceidLbl;
+            document.getElementById('btn-edit-profile').innerText = t.editProfile;
+            document.getElementById('btn-save-profile').innerText = t.saveProfile;
+            document.getElementById('btn-logout').innerText = t.logout;
+            document.getElementById('nav-home').innerText = t.navHome;
+            document.getElementById('nav-map').innerText = t.navMap;
+            document.getElementById('nav-history').innerText = t.navHistory;
+            document.getElementById('nav-settings').innerText = t.navSettings;
+        }
+
+        function openRegCamera() {
+            let modal = document.getElementById('reg-camera-modal');
+            modal.classList.remove('hidden');
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                mediaStream = stream;
+                document.getElementById('reg-video').srcObject = stream;
+            })
+            .catch(err => {
+                alert("Kameraga ruxsat berilmadi yoki kamera topilmadi!");
+                modal.classList.add('hidden');
+            });
+        }
+
+        function captureRegPhoto() {
+            let video = document.getElementById('reg-video');
+            let canvas = document.getElementById('reg-canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            let ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            registeredFacePhoto = canvas.toDataURL('image/png');
+
+            if(mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+            }
+            document.getElementById('reg-camera-modal').classList.add('hidden');
+            document.getElementById('face-reg-status').innerText = "✅ Yuz rasmi saqlandi!";
+            document.getElementById('face-reg-status').style.color = "#00ff66";
+        }
+
+        function startFaceIDCamera() {
+            let place = document.getElementById('place_name').value;
+            let amount = document.getElementById('amount').value;
+            if(!place || !amount) { alert("Maydonlarni to'ldiring!"); return; }
+
+            let modal = document.getElementById('face-modal');
+            modal.classList.remove('hidden');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                mediaStream = stream;
+                document.getElementById('face-video').srcObject = stream;
+            })
+            .catch(err => {
+                alert("Kamera ochilmadi!");
+                modal.classList.add('hidden');
+            });
+        }
+
+        function verifyFaceID() {
+            document.getElementById('face-status').innerText = "Yuz tahlil qilinmoqda va solishtirilmoqda...";
+            
+            fetch('/api/verify-face', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: currentUserPhone })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    document.getElementById('face-status').innerText = `✅ Tasdiqlandi! O'xshashlik: ${data.confidence}`;
+                    document.getElementById('face-status').style.color = "#00ff66";
+                    setTimeout(() => {
+                        if(mediaStream) {
+                            mediaStream.getTracks().forEach(track => track.stop());
+                        }
+                        document.getElementById('face-modal').classList.add('hidden');
+                        document.getElementById('face-status').innerText = "Kamera orqali yuzingiz tekshirilmoqda...";
+                        document.getElementById('face-status').style.color = "#aaa";
+                        makeTransaction();
+                    }, 1200);
+                } else {
+                    alert("❌ Yuz mos kelmadi!");
+                    if(mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+                    document.getElementById('face-modal').classList.add('hidden');
+                }
+            });
+        }
+
+        function showRegister() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('register-section').classList.remove('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('register-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+        }
+
+        function simulateOneID() {
+            document.getElementById('oneid-status').innerText = "OneID ulanmoqda...";
+            setTimeout(() => {
+                verifiedOneID = "ONEID-" + Math.floor(100000 + Math.random() * 900000);
+                document.getElementById('reg-fullname').value = "Zaylobiddin Egamyorov";
+                document.getElementById('oneid-status').innerText = "✅ OneID tasdiqlandi!";
+                document.getElementById('oneid-status').style.color = "#00ff66";
+            }, 1000);
+        }
+
+        function registerUser() {
+            let phone = document.getElementById('reg-phone').value;
+            let fullname = document.getElementById('reg-fullname').value;
+            let password = document.getElementById('reg-password').value;
+            let confpassword = document.getElementById('reg-confpassword').value;
+
+            if(!verifiedOneID) { alert("OneID tasdiqlanmagan!"); return; }
+            if(!registeredFacePhoto) { alert("Face ID uchun yuzingizni rasmga oling!"); return; }
+            if(!phone || !password) { alert("Telefon va parolni kiriting!"); return; }
+            if(password !== confpassword) { alert("Parollar mos kelmadi!"); return; }
+
+            fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, one_id: verifiedOneID, full_name: fullname, password: password, face_photo: registeredFacePhoto })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert("Ro'yxatdan o'tildi! Endi kiring.");
+                    showLogin();
+                } else { alert(data.message); }
+            });
+        }
+
+        function loginUser() {
+            let phone = document.getElementById('login-phone').value;
+            let password = document.getElementById('login-password').value;
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone, password: password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    currentUserPhone = phone;
+                    currentUserName = data.full_name;
+                    document.getElementById('user-display').innerText = "Xush kelibsiz: " + currentUserName;
+                    
+                    document.getElementById('login-section').classList.add('hidden');
+                    document.getElementById('dashboard-section').classList.remove('hidden');
+                    document.getElementById('bottom-nav-bar').classList.remove('hidden');
+                    loadTransactions();
+                    loadStats();
+                } else { alert(data.message); }
+            });
+        }
+
+        function logoutUser() {
+            currentUserPhone = "";
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('bottom-nav-bar').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+            document.getElementById('login-phone').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function switchTab(tabName) {
+            let tabHome = document.getElementById('tab-home');
+            let tabMap = document.getElementById('tab-map');
+            let tabHistory = document.getElementById('tab-history');
+            let tabSettings = document.getElementById('tab-settings');
+            
+            let btnHome = document.getElementById('btn-tab-home');
+            let btnMap = document.getElementById('btn-tab-map');
+            let btnHistory = document.getElementById('btn-tab-history');
+            let btnSettings = document.getElementById('btn-tab-settings');
+
+            tabHome.classList.add('hidden');
+            tabMap.classList.add('hidden');
+            tabHistory.classList.add('hidden');
+            tabSettings.classList.add('hidden');
+            
+            btnHome.classList.remove('active');
+            btnMap.classList.remove('active');
+            btnHistory.classList.remove('active');
+            btnSettings.classList.remove('active');
+
+            if(tabName === 'home') {
+                tabHome.classList.remove('hidden');
+                btnHome.classList.add('active');
+            } else if(tabName === 'map') {
+                tabMap.classList.remove('hidden');
+                btnMap.classList.add('active');
+                setTimeout(initMap, 200);
+            } else if(tabName === 'history') {
+                tabHistory.classList.remove('hidden');
+                btnHistory.classList.add('active');
+                loadTransactions();
+                loadStats();
+            } else if(tabName === 'settings') {
+                tabSettings.classList.remove('hidden');
+                btnSettings.classList.add('active');
+            }
+        }
+
+        function rateStar(star) {
+            currentRating = star;
+            let stars = document.querySelectorAll('#star-rating span');
+            stars.forEach((s, index) => {
+                if (index < star) s.style.color = "#00ff66";
+                else s.style.color = "#444";
+            });
+        }
+
+        function submitFeedback() {
+            if(currentRating === 0) { alert("Baxo bering!"); return; }
+            alert("✅ Rahmat!");
+            document.getElementById('feedback-text').value = '';
+            rateStar(0);
+        }
+
+        function initMap() {
+            if(!mapInitialized) {
+                map = L.map('map-container').setView([41.2995, 69.2401], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+                markersLayer.addTo(map);
+                mapInitialized = true;
+            } else {
+                map.invalidateSize();
+            }
+        }
+
+        function searchMapPlaces() {
+            let query = document.getElementById('map-search-query').value;
+            if(!query) { alert("Qidiruv so'zini kiriting!"); return; }
+
+            let url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " Tashkent")}`;
+
+            fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                markersLayer.clearLayers();
+                if(data.length === 0) { alert("Topilmadi!"); return; }
+
+                data.forEach((item, index) => {
+                    let lat = parseFloat(item.lat);
+                    let lon = parseFloat(item.lon);
+                    let yandexUrl = `https://yandex.com/maps/?rtext=~${lat},${lon}&rtt=auto`;
+
+                    let popupContent = `<div style="font-size:12px;"><b>${item.display_name}</b><br><br><a href="${yandexUrl}" target="_blank" style="background:#00ff66; color:black; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">🗺️ Yandex Map</a></div>`;
+                    let marker = L.marker([lat, lon]).bindPopup(popupContent);
+                    markersLayer.addLayer(marker);
+
+                    if(index === 0) { map.setView([lat, lon], 14); marker.openPopup(); }
+                });
+            });
+        }
+
+        function makeTransaction() {
+            let place = document.getElementById('place_name').value;
+            let category = document.getElementById('category').value;
+            let amount = document.getElementById('amount').value;
+
+            fetch('/api/transaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: currentUserPhone, place: place, category: category, amount: amount })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    alert("✅ Face ID tasdiqlandi va pul o'tkazildi!");
+                    document.getElementById('balance-display').innerText = Number(data.new_balance).toLocaleString() + " UZS";
+                    document.getElementById('place_name').value = '';
+                    document.getElementById('amount').value = '';
+                    loadTransactions();
+                    loadStats();
+                } else { alert(data.message); }
+            });
+        }
+
+        function loadTransactions() {
+            fetch('/api/transactions/' + currentUserPhone)
+            .then(res => res.json())
+            .then(data => {
+                let container = document.getElementById('history-container');
+                if(data.transactions.length === 0) {
+                    container.innerHTML = `<p style="font-size:11px; color:#777; text-align:center;">Tranzaksiyalar yo'q</p>`;
+                    return;
+                }
+                let html = "";
+                data.transactions.forEach(tx => {
+                    html += `<div class="history-item"><div><strong>${tx.place}</strong><br><span style="font-size:10px; color:#aaa;">${tx.category} • ${tx.date}</span></div><span style="color:#00ff66; font-weight:bold;">-${Number(tx.amount).toLocaleString()} UZS</span></div>`;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        function loadStats() {
+            fetch('/api/stats/' + currentUserPhone)
+            .then(res => res.json())
+            .then(data => {
+                let container = document.getElementById('stats-container');
+                if(Object.keys(data.stats).length === 0) {
+                    container.innerHTML = `<p style="font-size:11px; color:#777; text-align:center;">Statistika yo'q</p>`;
+                    return;
+                }
+                let html = "";
+                for (let cat in data.stats) {
+                    html += `<div class="history-item"><span>${cat}</span><span style="color:#00ff66; font-weight:bold;">${Number(data.stats[cat]).toLocaleString()} UZS</span></div>`;
+                }
+                container.innerHTML = html;
+            });
+        }
+    </script>
+</body>
+</html>
